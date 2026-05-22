@@ -22,6 +22,7 @@ async def main():
     server = Server()
     await server.init()
 
+
     # Set the endpoint URL where clients will connect
     # 0.0.0.0 is the default interface, but it can be changed to 127.0.0.1 to restrict access to the local machine.
     server.set_endpoint("opc.tcp://0.0.0.0:4840/th-koeln/opcua/")
