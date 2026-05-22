@@ -2,8 +2,18 @@ import asyncio
 import logging
 from asyncua import Server
 
-# Enable basic logging to see server status and connection attempts
-logging.basicConfig(level=logging.INFO)
+# ==========================================
+# SWITCH: Set to False to deactivate log output
+# ==========================================
+ENABLE_LOGGING = True
+
+# Configure logging based on the switch
+if ENABLE_LOGGING:
+    logging.basicConfig(level=logging.INFO)
+else:
+    # Disable all logging below CRITICAL level
+    logging.disable(logging.CRITICAL)
+
 _logger = logging.getLogger('asyncua')
 
 
@@ -14,12 +24,12 @@ async def main():
 
     # Set the endpoint URL where clients will connect
     # 0.0.0.0 is the default interface, but it can be changed to 127.0.0.1 to restrict access to the local machine.
-    server.set_endpoint("opc.tcp://0.0.0.0:4840/freeopcua/server/")
-    server.set_server_name("Basic OPC UA Server")
+    server.set_endpoint("opc.tcp://0.0.0.0:4840/th-koeln/opcua/")
+    server.set_server_name("TH Koeln - Basic OPC UA Server")
 
     # 2. Setup a custom namespace
     # Namespaces prevent collisions between node IDs from different systems
-    uri = "http://your_domain.com/opcua"
+    uri = "http://th-koeln.de/ait/opcua/basic_opcua_server/"
     idx = await server.register_namespace(uri)
 
     # 3. Populate the Address Space
