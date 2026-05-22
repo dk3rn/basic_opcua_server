@@ -37,15 +37,19 @@ async def main():
     # Create a parent object to organize our variables
     my_device = await server.nodes.objects.add_object(idx, "Device_1")
 
-    # Add the variables (Boolean and Floating Point)
-    # The data type is automatically inferred from the initial value (False -> Boolean, 0.0 -> Float/Double)
-    bool_var = await my_device.add_variable(idx, "Status_Active", False)
-    float_var = await my_device.add_variable(idx, "Process_Value", 0.0)
+    # Add the variables (Boolean, Floating Point, and Integer)
+    # The data type is automatically inferred from the initial value
+    bool_var = await my_device.add_variable(idx, "Status_Active", False)  # Infers Boolean
+    float_var = await my_device.add_variable(idx, "Process_Value", 0.0)  # Infers Double/Float
+    int_var = await my_device.add_variable(idx, "Count_Value", 0)  # Infers Int64
 
     # 4. Make variables writable
     # By default, variables are read-only. This allows clients to change the values.
     await bool_var.set_writable()
     await float_var.set_writable()
+    await int_var.set_writable()
+
+
 
     _logger.info("Starting OPC UA Server at %s", server.endpoint.geturl())
     _logger.info("Namespace ID: %s", idx)
