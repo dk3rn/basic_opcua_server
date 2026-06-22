@@ -3,7 +3,7 @@
   "device_name": "Water_Tank_Device",
   "nodes": {
     "TankLevel": "ns=3;s=\"DB_Communication\".\"TankLevel\"",
-    "SensorMin": "ns=3;s=\"DB_Communication\".\"SensorMin\"",
+    "SensorMin": "ns=4;s=\"DB_Communication\".\"SensorMin\"",
     "SensorMax": "ns=3;s=\"DB_Communication\".\"SensorMax\"",
     "PumpPower": "ns=3;s=\"DB_Communication\".\"PumpPower\""
   },

@@ -52,10 +52,6 @@ async def main():
     uri = "http://th-koeln.de/ait/opcua/simple_server/"
     idx = await server.register_namespace(uri)
 
-    # Register additional dummy namespaces to ensure index 3 exists
-    # since the NodeIDs in your config explicitly request ns=3
-    await server.register_namespace("http://dummy_namespace_2")
-    await server.register_namespace("http://dummy_namespace_3")
 
     # 4. Populate the Address Space
     device_name = config.get("device_name", "Some_Device")
