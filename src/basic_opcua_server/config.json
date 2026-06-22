@@ -1,0 +1,16 @@
+{
+  "server_url": "opc.tcp://127.0.0.1:4840",
+  "device_name": "Water_Tank_Device",
+  "nodes": {
+    "TankLevel": "ns=3;s=\"DB_Communication\".\"TankLevel\"",
+    "SensorMin": "ns=3;s=\"DB_Communication\".\"SensorMin\"",
+    "SensorMax": "ns=3;s=\"DB_Communication\".\"SensorMax\"",
+    "PumpPower": "ns=3;s=\"DB_Communication\".\"PumpPower\""
+  },
+  "data_types": {
+    "TankLevel": "float",
+    "SensorMin": "boolean",
+    "SensorMax": "boolean",
+    "PumpPower": "float"
+  }
+}

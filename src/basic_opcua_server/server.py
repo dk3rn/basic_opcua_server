@@ -1,5 +1,8 @@
 import asyncio
+import json
 import logging
+import sys
+from pathlib import Path
 from asyncua import Server
 
 # ==========================================
@@ -9,7 +12,7 @@ ENABLE_LOGGING = True
 
 # Configure logging based on the switch
 if ENABLE_LOGGING:
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.ERROR)
 else:
     # Disable all logging below CRITICAL level
     logging.disable(logging.CRITICAL)
@@ -18,47 +21,75 @@ _logger = logging.getLogger('asyncua')
 
 
 async def main():
-    # 1. Initialize the Server
+    # 1. Load Configuration
+    try:
+        # Safely resolve the path whether running as script or frozen executable
+        if getattr(sys, 'frozen', False):
+            base_dir = Path(sys.executable).parent
+        else:
+            base_dir = Path(__file__).resolve().parent
+
+        config_path = base_dir / "config.json"
+
+        with open(config_path, "r") as f:
+            config = json.load(f)
+
+        _logger.info("Successfully loaded config.json")
+    except Exception as e:
+        _logger.error("Configuration Error: %s", e)
+        return
+
+    # 2. Initialize the Server
     server = Server()
     await server.init()
 
+    # Apply the URL from the JSON config, fallback to default if missing
+    url = config.get("server_url", "opc.tcp://0.0.0.0:4840/th-koeln/opcua/")
+    server.set_endpoint(url)
+    server.set_server_name("SimpleOPCUAServer")
 
-    # Set the endpoint URL where clients will connect
-    # 0.0.0.0 is the default interface, but it can be changed to 127.0.0.1 to restrict access to the local machine.
-    server.set_endpoint("opc.tcp://0.0.0.0:4840/th-koeln/opcua/")
-    server.set_server_name("TH Koeln - Basic OPC UA Server")
-
-    # 2. Setup a custom namespace
-    # Namespaces prevent collisions between node IDs from different systems
-    uri = "http://th-koeln.de/ait/opcua/basic_opcua_server/"
+    # 3. Setup Namespaces
+    uri = "http://th-koeln.de/ait/opcua/simple_server/"
     idx = await server.register_namespace(uri)
 
-    # 3. Populate the Address Space
-    # Create a parent object to organize our variables
-    my_device = await server.nodes.objects.add_object(idx, "Device_1")
+    # Register additional dummy namespaces to ensure index 3 exists
+    # since the NodeIDs in your config explicitly request ns=3
+    await server.register_namespace("http://dummy_namespace_2")
+    await server.register_namespace("http://dummy_namespace_3")
 
-    # Add the variables (Boolean, Floating Point, and Integer)
-    # The data type is automatically inferred from the initial value
-    bool_var = await my_device.add_variable(idx, "Status_Active", False)  # Infers Boolean
-    float_var = await my_device.add_variable(idx, "Process_Value", 0.0)  # Infers Double/Float
-    int_var = await my_device.add_variable(idx, "Count_Value", 0)  # Infers Int64
+    # 4. Populate the Address Space
+    device_name = config.get("device_name", "Some_Device")
+    my_device = await server.nodes.objects.add_object(idx, device_name)
 
-    # 4. Make variables writable
-    # By default, variables are read-only. This allows clients to change the values.
-    await bool_var.set_writable()
-    await float_var.set_writable()
-    await int_var.set_writable()
+    node_config = config.get("nodes", {})
+    data_types = config.get("data_types", {})
 
 
+
+    # Dynamically create nodes from the dictionary
+    for node_name, node_id_str in node_config.items():
+        # Read intended type from config, default to boolean if missing
+        intended_type = data_types.get(node_name, "boolean")
+
+        # Infer data type based on the config file
+        if intended_type == "float":
+            initial_value = 0.0
+        else:
+            initial_value = False
+
+        try:
+            # Create variable using the explicit string ID from the JSON
+            var = await my_device.add_variable(node_id_str, node_name, initial_value)
+            await var.set_writable()
+            _logger.info("Created node: %s -> %s (Type: %s)", node_name, node_id_str, intended_type)
+        except Exception as e:
+            _logger.error("Failed to create node %s: %s", node_name, e)
 
     _logger.info("Starting OPC UA Server at %s", server.endpoint.geturl())
-    _logger.info("Namespace ID: %s", idx)
 
     # 5. Start the server and keep it running
-    # The 'async with' context manager automatically handles starting and stopping the server
     async with server:
         while True:
-            # The server runs in the background; this loop keeps the main script alive
             await asyncio.sleep(1)
 
 
